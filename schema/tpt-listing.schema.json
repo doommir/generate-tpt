@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/doommir/generate-tpt/schema/tpt-listing.schema.json",
+  "title": "TPT Listing",
+  "description": "Data model of a Teachers Pay Teachers product listing, reverse-engineered on 2026-10-30. Limits marked [unverified] in the description come from seller sources, not TPT; confirm against the live upload form. See docs/tpt-teardown.md.",
+  "type": "object",
+  "required": ["title", "description", "grades", "subjects", "resourceTypes", "formats", "price", "cover", "provenance"],
+  "additionalProperties": false,
+  "properties": {
+    "productId": {
+      "type": "integer",
+      "description": "Numeric ID TPT assigns at publish. Appears at the end of /Product/{Title-Slug}-{productId}."
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^https://www\\.teacherspayteachers\\.com/Product/[A-Za-z0-9-]+-[0-9]+$"
+    },
+    "storeSlug": {
+      "type": "string",
+      "description": "Seller store path segment: /store/{storeSlug}."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "[unverified] 80-character max."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opening 1-2 sentences show in search results and the store profile; lead with the core keyword and outcome."
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": { "type": "string", "maxLength": 50 },
+      "description": "[unverified] About 20 tags, 50 characters each."
+    },
+    "grades": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "PreK", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+          "Higher Education", "Adult Education", "Homeschool", "Staff", "Not Grade Specific"
+        ]
+      },
+      "description": "[unverified] Per-grade values recalled from the live upload form. Browse menu groups them into bands: PreK-K, 1-2, 3-5, 6-8, 9-12, Other."
+    },
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string" },
+      "description": "Leaf values from TPT's subject tree (e.g. 'Math > Fractions'). Pull the current tree from the live site."
+    },
+    "resourceTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string" },
+      "description": "e.g. Worksheets, Activities, Lesson Plans, Task Cards, Centers, Assessments."
+    },
+    "formats": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["PDF", "Easel", "Google Apps", "Microsoft", "Image", "Video", "Other"] }
+    },
+    "pages": { "type": "integer", "minimum": 1 },
+    "answerKey": { "enum": ["Included", "Not Included", "Does Not Apply"] },
+    "standards": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["framework", "code"],
+        "properties": {
+          "framework": { "type": "string", "examples": ["CCSS", "TEKS", "NGSS"] },
+          "code": { "type": "string", "examples": ["CCSS.MATH.CONTENT.3.NF.A.1"] }
+        }
+      }
+    },
+    "price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "USD. 0 means free."
+    },
+    "isBundle": { "type": "boolean", "default": false },
+    "bundleProductIds": {
+      "type": "array",
+      "items": { "type": "integer" }
+    },
+    "cover": { "$ref": "#/$defs/image" },
+    "thumbnails": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/image" },
+      "description": "Thumbnails 2-4; shown on the product page only."
+    },
+    "preview": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/image" },
+      "description": "[unverified] JPG/PNG, up to 10 MB each, or a preview PDF."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "TPT's October 2026 policy bans AI-generated resources, covers, previews, and listings. Record authorship so a linter can block non-compliant uploads.",
+      "required": ["resource", "cover", "preview", "listingCopy"],
+      "properties": {
+        "resource": { "$ref": "#/$defs/authorship" },
+        "cover": { "$ref": "#/$defs/authorship" },
+        "preview": { "$ref": "#/$defs/authorship" },
+        "listingCopy": { "$ref": "#/$defs/authorship" }
+      }
+    }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "widthPx": { "type": "integer", "description": "[unverified] Recommended 1224." },
+        "heightPx": { "type": "integer", "description": "[unverified] Recommended 1584." }
+      }
+    },
+    "authorship": {
+      "enum": ["human", "human_with_ai_assist", "ai_generated"],
+      "description": "Only 'human' is known-safe for TPT. 'human_with_ai_assist' depends on final guideline wording. 'ai_generated' violates the announced policy."
+    }
+  }
+}
